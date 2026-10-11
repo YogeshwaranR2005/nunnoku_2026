@@ -1,0 +1,12 @@
+# Python virtual environment
+.venv/
+assets/.venv/
+venv/
+env/
+__pycache__/
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

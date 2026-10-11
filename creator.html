@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creator Portal — நுண்ணோக்கு (Nunnokku)</title>
+<meta name="robots" content="noindex, nofollow">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Tamil:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+
+<style>
+/* Creator Portal Page Styles */
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.portal-container {
+  max-width: 1100px;
+  margin: 2rem auto;
+  padding: 0 1.25rem;
+  width: 100%;
+  box-sizing: border-box;
+  flex: 1;
+}
+
+.portal-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(43, 42, 37, 0.08);
+  overflow: hidden;
+}
+
+.portal-header {
+  background: var(--green-deep);
+  color: var(--paper);
+  padding: 1.5rem 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.portal-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.portal-title h1 {
+  font-family: var(--serif-tamil);
+  font-size: 1.4rem;
+  margin: 0;
+  color: var(--paper);
+}
+
+.portal-title p {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+  color: #CFE0D3;
+}
+
+.portal-body {
+  padding: 1.8rem;
+}
+
+/* Authentication Screen */
+.auth-box {
+  max-width: 420px;
+  margin: 3.5rem auto;
+  text-align: center;
+}
+
+.auth-box .lock-icon {
+  width: 54px;
+  height: 54px;
+  color: var(--gold);
+  margin-bottom: 1rem;
+}
+
+.auth-box h2 {
+  font-family: var(--serif-tamil);
+  color: var(--green-deep);
+  margin: 0 0 0.5rem;
+}
+
+.auth-box p {
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+  margin: 0 0 1.6rem;
+}
+
+.auth-form {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.auth-form input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  outline: none;
+}
+.auth-form input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(180, 134, 58, 0.2);
+}
+
+.auth-error {
+  color: #c83232;
+  font-size: 0.86rem;
+  margin-top: 0.8rem;
+}
+
+/* Dashboard Toolbar */
+.dash-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.2rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.stat-pills {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.stat-pill {
+  background: var(--paper-deep);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--green-deep);
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.search-filter-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.4rem;
+  flex-wrap: wrap;
+}
+
+.search-input-box {
+  flex: 1;
+  min-width: 260px;
+  position: relative;
+}
+
+.search-input-box input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.75rem 1rem 0.75rem 2.4rem;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  font-size: 0.92rem;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.8rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink-soft);
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+}
+
+/* In-Page Table Styling */
+.table-responsive {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #FFFFFF;
+}
+
+.submissions-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.88rem;
+}
+
+.submissions-table th {
+  background: var(--paper-deep);
+  color: var(--green-deep);
+  font-weight: 600;
+  padding: 0.85rem 1rem;
+  border-bottom: 1.5px solid var(--line);
+  white-space: nowrap;
+}
+
+.submissions-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  vertical-align: middle;
+}
+
+.submissions-table tr:last-child td {
+  border-bottom: none;
+}
+
+.submissions-table tr:hover {
+  background: rgba(230, 233, 218, 0.35);
+}
+
+.tag-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  background: var(--sage);
+  color: var(--green-deep);
+  white-space: nowrap;
+}
+
+.file-link-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--green);
+  text-decoration: none;
+  font-weight: 600;
+}
+.file-link-cell:hover {
+  text-decoration: underline;
+  color: var(--green-deep);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3.5rem 1rem;
+  color: var(--ink-soft);
+}
+.empty-state svg {
+  width: 48px;
+  height: 48px;
+  color: var(--gold);
+  margin-bottom: 0.8rem;
+}
+
+.loading-spinner-box {
+  text-align: center;
+  padding: 3.5rem 1rem;
+}
+</style>
+</head>
+<body>
+
+<main class="portal-container">
+  <div class="portal-card">
+    
+    <!-- Portal Header -->
+    <header class="portal-header">
+      <div class="portal-header-left">
+        <span class="logo-frame" style="width: 50px; height: 50px;">
+          <img class="logo logo-left" src="assets/logo-left.jpeg" alt="Chapter logo" style="width: 46px; height: 46px;">
+        </span>
+        <div class="portal-title">
+          <h1>நுண்ணோக்கு — Creator Portal</h1>
+          <p>IUCEE EWB TCE Student Chapter &bull; Organizers Dashboard</p>
+        </div>
+      </div>
+      <div>
+        <a href="index.html" class="btn btn-outline btn-sm" style="color: var(--paper); border-color: rgba(250,245,234,0.4);">
+          &larr; Back to Website
+        </a>
+      </div>
+    </header>
+
+    <div class="portal-body">
+
+      <!-- 1. Passcode Screen -->
+      <section id="auth-section" class="auth-box">
+        <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        <h2>Protected Organizers Portal</h2>
+        <p>Enter the creator passcode to view student submissions and access the tracking spreadsheet.</p>
+        
+        <form id="passcode-form" class="auth-form" novalidate>
+          <input type="password" id="passcode-input" placeholder="Enter creator passcode" required autofocus autocomplete="current-password">
+          <button type="submit" class="btn btn-primary">Unlock</button>
+        </form>
+        <div id="auth-error-msg" class="auth-error hidden"></div>
+      </section>
+
+      <!-- 2. Submissions Table & Dashboard -->
+      <section id="dashboard-section" class="hidden">
+        
+        <!-- Dashboard Toolbar -->
+        <div class="dash-header-bar">
+          <div class="stat-pills">
+            <span class="stat-pill"><span id="total-count">0</span> Total Submissions</span>
+            <span class="stat-pill" style="background: #e8f5e9; color: #2e7d32; border-color: #c8e6c9;">● Drive Connected</span>
+          </div>
+
+          <div class="action-buttons">
+            <a id="drive-btn" href="https://drive.google.com/drive/folders/19Fz5dP-hQolfqGO4Phb431_vhfUcmlip" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+              <span>Open Google Drive Folder</span>
+            </a>
+
+            <button type="button" id="refresh-btn" class="btn btn-outline btn-sm" title="Reload submissions">
+              🔄 Refresh
+            </button>
+
+            <button type="button" id="export-csv-btn" class="btn btn-outline btn-sm" title="Export table to CSV">
+              📥 Export CSV
+            </button>
+
+            <button type="button" id="lock-btn" class="btn btn-outline btn-sm" title="Lock portal">
+              🔒 Lock
+            </button>
+          </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-filter-row">
+          <div class="search-input-box">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="search" id="search-input" placeholder="Search by Student Name, Register Number, Department, or Year...">
+          </div>
+        </div>
+
+        <!-- In-Page Table -->
+        <div class="table-responsive">
+          <table class="submissions-table" id="submissions-table">
+            <thead>
+              <tr>
+                <th style="width: 40px;">#</th>
+                <th>Submission Time</th>
+                <th>Student Name</th>
+                <th>Register No</th>
+                <th>Department</th>
+                <th>Year</th>
+                <th>LinkedIn</th>
+                <th>File Name</th>
+                <th style="text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="table-body">
+              <!-- Dynamically populated rows -->
+            </tbody>
+          </table>
+        </div>
+
+      </section>
+
+    </div>
+  </div>
+</main>
+
+<script>
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw6AKPrMkuItfA8wDkEnIT2LnBByjAhY2iDsRWib3MHMQGskU0speyXKt8cK2-sACo0/exec";
+const DRIVE_FOLDER_URL = "https://drive.google.com/drive/folders/19Fz5dP-hQolfqGO4Phb431_vhfUcmlip";
+const CREATOR_PASSCODE = "nunnokku2026";
+
+let allSubmissions = [];
+let activePasscode = "";
+
+const authSection = document.getElementById("auth-section");
+const dashSection = document.getElementById("dashboard-section");
+const passcodeForm = document.getElementById("passcode-form");
+const passcodeInput = document.getElementById("passcode-input");
+const authErrorMsg = document.getElementById("auth-error-msg");
+const tableBody = document.getElementById("table-body");
+const totalCount = document.getElementById("total-count");
+const searchInput = document.getElementById("search-input");
+const refreshBtn = document.getElementById("refresh-btn");
+const lockBtn = document.getElementById("lock-btn");
+const exportCsvBtn = document.getElementById("export-csv-btn");
+
+// Check session
+if (sessionStorage.getItem("creator_auth") === "true") {
+  activePasscode = CREATOR_PASSCODE;
+  showDashboard();
+}
+
+passcodeForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const entered = passcodeInput.value.trim();
+
+  if (entered === CREATOR_PASSCODE) {
+    activePasscode = entered;
+    sessionStorage.setItem("creator_auth", "true");
+    authErrorMsg.classList.add("hidden");
+    showDashboard();
+  } else {
+    authErrorMsg.textContent = "Incorrect passcode. Please try again.";
+    authErrorMsg.classList.remove("hidden");
+    passcodeInput.focus();
+  }
+});
+
+function showDashboard() {
+  authSection.classList.add("hidden");
+  dashSection.classList.remove("hidden");
+  fetchSubmissions();
+}
+
+lockBtn.addEventListener("click", () => {
+  sessionStorage.removeItem("creator_auth");
+  activePasscode = "";
+  passcodeInput.value = "";
+  dashSection.classList.add("hidden");
+  authSection.classList.remove("hidden");
+});
+
+refreshBtn.addEventListener("click", () => fetchSubmissions());
+
+searchInput.addEventListener("input", () => {
+  const q = searchInput.value.trim().toLowerCase();
+  if (!q) {
+    renderTable(allSubmissions);
+    return;
+  }
+  const filtered = allSubmissions.filter(s => {
+    return (s.name || "").toLowerCase().includes(q) ||
+           (s.regNo || "").toLowerCase().includes(q) ||
+           (s.department || "").toLowerCase().includes(q) ||
+           (s.year || "").toLowerCase().includes(q) ||
+           (s.linkedin || "").toLowerCase().includes(q) ||
+           (s.fileName || "").toLowerCase().includes(q);
+  });
+  renderTable(filtered);
+});
+
+async function fetchSubmissions() {
+  tableBody.innerHTML = `
+    <tr>
+      <td colspan="9" class="loading-spinner-box">
+        <div class="state-spinner" style="margin: 0 auto 0.8rem;"></div>
+        <p style="color: var(--ink-soft); margin: 0;">Loading submissions from your Google Sheet &amp; Drive...</p>
+      </td>
+    </tr>
+  `;
+
+  try {
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "list", passcode: activePasscode })
+    });
+
+    const data = await response.json();
+
+    if (data.status === "success") {
+      allSubmissions = data.submissions || [];
+      totalCount.textContent = allSubmissions.length;
+      renderTable(allSubmissions);
+    } else {
+      throw new Error(data.message || "Failed to fetch spreadsheet log.");
+    }
+  } catch (err) {
+    console.warn("Notice:", err);
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="9" class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <h3 style="margin: 0 0 0.5rem; color: var(--green-deep); font-family: var(--serif-tamil);">Submissions Stored Directly in Drive</h3>
+          <p style="max-width: 50ch; margin: 0 auto 1.2rem; font-size: 0.9rem;">
+            Your files are safely saved inside your Google Drive folder. To activate in-page table tracking from Google Sheets, update <code>Code.gs</code> with the enhanced script.
+          </p>
+          <a href="${DRIVE_FOLDER_URL}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">
+            Open Google Drive Folder ↗
+          </a>
+        </td>
+      </tr>
+    `;
+  }
+}
+
+function renderTable(items) {
+  if (!items || items.length === 0) {
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="9" class="empty-state">
+          <p>No submissions found matching your search.</p>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tableBody.innerHTML = items.map((sub, idx) => {
+    const cleanLi = (sub.linkedin || "").trim();
+    const liUrl = cleanLi ? (cleanLi.startsWith("http") ? cleanLi : "https://linkedin.com/in/" + cleanLi.replace(/^@/, "")) : "";
+
+    return `
+      <tr>
+        <td style="color: var(--ink-soft); font-weight: 600;">${idx + 1}</td>
+        <td style="white-space: nowrap; font-size: 0.82rem; color: var(--ink-soft);">${escapeHtml(sub.timestamp || "-")}</td>
+        <td><strong>${escapeHtml(sub.name || "Anonymous")}</strong></td>
+        <td><span class="tag-badge">${escapeHtml(sub.regNo || "-")}</span></td>
+        <td>${escapeHtml(sub.department || "-")}</td>
+        <td><span class="tag-badge" style="background: var(--paper-deep);">${escapeHtml(sub.year || "-")}</span></td>
+        <td>
+          ${liUrl ? `<a href="${escapeHtml(liUrl)}" target="_blank" rel="noopener noreferrer" class="tag-badge" style="background:#0a66c2; color:#fff; text-decoration:none;" title="${escapeHtml(cleanLi)}">LinkedIn ↗</a>` : `<span style="color:var(--ink-soft);">-</span>`}
+        </td>
+        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(sub.fileName)}">
+          ${escapeHtml(sub.fileName || "File")}
+        </td>
+        <td style="text-align: right; white-space: nowrap;">
+          <a href="${escapeHtml(sub.fileUrl || '#')}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm" style="padding: 0.25rem 0.65rem;">
+            View ↗
+          </a>
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+
+exportCsvBtn.addEventListener("click", () => {
+  if (allSubmissions.length === 0) {
+    alert("No submissions available to export.");
+    return;
+  }
+
+  let csvContent = "data:text/csv;charset=utf-8,";
+  csvContent += "Index,Timestamp,Student Name,Register No,Department,Year,LinkedIn,File Name,Drive Link\n";
+
+  allSubmissions.forEach((sub, i) => {
+    const row = [
+      i + 1,
+      `"${(sub.timestamp || "").replace(/"/g, '""')}"`,
+      `"${(sub.name || "").replace(/"/g, '""')}"`,
+      `"${(sub.regNo || "").replace(/"/g, '""')}"`,
+      `"${(sub.department || "").replace(/"/g, '""')}"`,
+      `"${(sub.year || "").replace(/"/g, '""')}"`,
+      `"${(sub.linkedin || "").replace(/"/g, '""')}"`,
+      `"${(sub.fileName || "").replace(/"/g, '""')}"`,
+      `"${(sub.fileUrl || "").replace(/"/g, '""')}"`
+    ];
+    csvContent += row.join(",") + "\n";
+  });
+
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", `nunnokku_submissions_${new Date().toISOString().slice(0,10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+});
+
+function escapeHtml(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+</script>
+
+</body>
+</html>
