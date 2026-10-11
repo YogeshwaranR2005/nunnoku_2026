@@ -1260,24 +1260,22 @@ a { color: inherit; }
     font-size: 0.95rem;
     line-height: 1.25;
     letter-spacing: 0.02em;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--ink);
+    text-align: center;
   }
 
-  .title-main {
+  .title-main,
+  .title-sub {
     display: block;
-    font-weight: 600;
+    font-size: 0.95rem;
+    font-weight: 700;
     color: var(--ink);
     white-space: nowrap;
   }
 
   .title-sub {
-    display: block;
-    font-size: 0.88rem;
-    font-weight: 600;
-    color: var(--ink);
-    margin-top: 0.1rem;
-    white-space: nowrap;
+    margin-top: 0.15rem;
   }
 }
 
