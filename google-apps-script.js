@@ -161,22 +161,9 @@ function handleUpload(data) {
   var department = (data.department || "").trim();
   var year = (data.year || "").trim();
   var linkedin = (data.linkedin || "").trim();
-  var fileName = (data.fileName || "submission").trim();
-  var fileType = data.mimeType || data.fileType || "application/octet-stream";
-  var fileDataBase64 = data.base64Data || data.fileData;
 
   if (!studentName || !regNo) {
     return jsonResponse({ status: "error", message: "Student Name and Register Number are required." });
-  }
-
-  if (!fileDataBase64) {
-    return jsonResponse({ status: "error", message: "No file content was provided." });
-  }
-
-  // Strip Base64 Data URL header if present (e.g. data:application/pdf;base64,...)
-  var base64Index = fileDataBase64.indexOf("base64,");
-  if (base64Index !== -1) {
-    fileDataBase64 = fileDataBase64.substring(base64Index + 7);
   }
 
   // Retrieve destination Google Drive folder
@@ -190,35 +177,84 @@ function handleUpload(data) {
     });
   }
 
-  // Decode file bytes and construct file blob
-  var decodedBytes = Utilities.base64Decode(fileDataBase64);
-  
-  // Keep file name strictly as the actual original file name (no extra student details prepended)
-  var cleanFileName = fileName;
-  
-  var blob = Utilities.newBlob(decodedBytes, fileType, cleanFileName);
-  var file = folder.createFile(blob);
-
-  // Set file metadata in Drive
   var timeZone = Session.getScriptTimeZone() || "Asia/Kolkata";
   var formattedTime = Utilities.formatDate(new Date(), timeZone, "yyyy-MM-dd HH:mm:ss");
-  
-  file.setDescription(
-    "Nunnokku Sustainability Observation Submission\n" +
-    "---------------------------------------------------\n" +
-    "Student Name: " + studentName + "\n" +
-    "Register/Roll No: " + regNo + "\n" +
-    "Department: " + department + "\n" +
-    "Year of Study: " + year + "\n" +
-    "LinkedIn: " + linkedin + "\n" +
-    "Submitted At: " + formattedTime + "\n" +
-    "Original File: " + fileName
-  );
 
-  var fileUrl = file.getUrl();
-  var fileId = file.getId();
+  function buildDesc(role, origName) {
+    return "Nunnokku Sustainability Observation Submission\n" +
+           "---------------------------------------------------\n" +
+           "Submission Role: " + role + "\n" +
+           "Student Name: " + studentName + "\n" +
+           "Register/Roll No: " + regNo + "\n" +
+           "Department: " + department + "\n" +
+           "Year of Study: " + year + "\n" +
+           "LinkedIn: " + linkedin + "\n" +
+           "Submitted At: " + formattedTime + "\n" +
+           "Original File: " + origName;
+  }
 
-  // Log record to Google Sheet in the same folder
+  var docName = "";
+  var docUrl = "";
+  var docId = "";
+
+  // 1. Process Reflection Document
+  var docObj = data.doc;
+  if (!docObj && data.base64Data && !data.photos) {
+    // Legacy single-file fallback
+    docObj = {
+      base64Data: data.base64Data,
+      fileName: data.fileName,
+      mimeType: data.mimeType
+    };
+  }
+
+  if (docObj && docObj.base64Data) {
+    var rawDocB64 = docObj.base64Data;
+    var b64Idx = rawDocB64.indexOf("base64,");
+    if (b64Idx !== -1) rawDocB64 = rawDocB64.substring(b64Idx + 7);
+
+    var docBytes = Utilities.base64Decode(rawDocB64);
+    docName = (docObj.fileName || "writeup.docx").trim();
+    var docMime = docObj.mimeType || "application/octet-stream";
+    var docBlob = Utilities.newBlob(docBytes, docMime, docName);
+    var docFile = folder.createFile(docBlob);
+    docFile.setDescription(buildDesc("Observation Write-up Document", docName));
+    docUrl = docFile.getUrl();
+    docId = docFile.getId();
+  }
+
+  // 2. Process Observation Photograph(s)
+  var photoList = data.photos || [];
+  if (data.photo) photoList.push(data.photo);
+
+  var savedPhotos = [];
+  for (var i = 0; i < photoList.length; i++) {
+    var pObj = photoList[i];
+    if (pObj && pObj.base64Data) {
+      var rawPB64 = pObj.base64Data;
+      var pIdx = rawPB64.indexOf("base64,");
+      if (pIdx !== -1) rawPB64 = rawPB64.substring(pIdx + 7);
+
+      var pBytes = Utilities.base64Decode(rawPB64);
+      var pName = (pObj.fileName || "observation_photo_" + (i + 1) + ".jpg").trim();
+      var pMime = pObj.mimeType || "image/jpeg";
+      var pBlob = Utilities.newBlob(pBytes, pMime, pName);
+      var pFile = folder.createFile(pBlob);
+      pFile.setDescription(buildDesc("Observation Photograph (" + (i + 1) + ")", pName));
+      savedPhotos.push({
+        fileName: pName,
+        fileUrl: pFile.getUrl(),
+        fileId: pFile.getId()
+      });
+    }
+  }
+
+  var photoNamesStr = savedPhotos.map(function(p) { return p.fileName; }).join(", ");
+  var photoUrlsStr = savedPhotos.map(function(p) { return p.fileUrl; }).join(", ");
+  var photoIdsStr = savedPhotos.map(function(p) { return p.fileId; }).join(", ");
+
+  // 3. Log to Google Sheet
+  // Columns: [Timestamp, Student Name, Register No, Department, Year, LinkedIn, Doc Name, Doc Link, Photo Names, Photo Links, Doc ID, Photo IDs]
   logToSheet(folder, [
     formattedTime,
     studentName,
@@ -226,17 +262,20 @@ function handleUpload(data) {
     department,
     year,
     linkedin,
-    cleanFileName,
-    fileUrl,
-    fileId
+    docName || "-",
+    docUrl || "-",
+    photoNamesStr || "-",
+    photoUrlsStr || "-",
+    docId || "-",
+    photoIdsStr || "-"
   ]);
 
   return jsonResponse({
     status: "success",
     message: "Observation successfully submitted!",
-    fileName: cleanFileName,
-    fileUrl: fileUrl,
-    fileId: fileId,
+    docName: docName,
+    docUrl: docUrl,
+    photos: savedPhotos,
     timestamp: formattedTime
   });
 }
@@ -264,10 +303,16 @@ function handleList(providedPasscode) {
     var sheet = getOrCreateLogSheet(folder);
     var data = sheet.getDataRange().getValues();
 
-    // Row 0 is headers [Timestamp, Name, Reg No, Department, Year, LinkedIn, File Name, Drive Link, File ID]
     for (var i = 1; i < data.length; i++) {
       var row = data[i];
       if (row[0] || row[1]) {
+        var isNewSchema = data[0].length >= 10 && String(data[0][6]).indexOf("Document") !== -1;
+        
+        var docName = isNewSchema ? (row[6] || "") : (row[6] || "");
+        var docUrl = isNewSchema ? (row[7] || "") : (row[7] || "");
+        var photoNames = isNewSchema ? (row[8] || "") : "";
+        var photoUrls = isNewSchema ? (row[9] || "") : "";
+
         submissions.push({
           timestamp: row[0],
           name: row[1],
@@ -275,9 +320,13 @@ function handleList(providedPasscode) {
           department: row[3],
           year: row[4],
           linkedin: row[5],
-          fileName: row[6],
-          fileUrl: row[7],
-          fileId: row[8]
+          docName: docName,
+          docUrl: docUrl,
+          photoNames: photoNames,
+          photoUrls: photoUrls,
+          // Compatibility fallbacks
+          fileName: docName || photoNames || "File",
+          fileUrl: docUrl || (photoUrls ? photoUrls.split(",")[0].trim() : "#")
         });
       }
     }
@@ -285,14 +334,13 @@ function handleList(providedPasscode) {
     Logger.log("Notice: Google Sheet read skipped/failed: " + sheetErr.toString());
   }
 
-  // Attempt 2: If sheet had no records or wasn't accessible, fallback to scanning Drive files directly
+  // Attempt 2: Fallback to scanning Drive folder files directly
   if (submissions.length === 0) {
     try {
       var filesIter = folder.getFiles();
       while (filesIter.hasNext()) {
         var f = filesIter.next();
         var fName = f.getName();
-        // Skip the log sheet itself
         if (fName === SHEET_NAME || f.getMimeType() === "application/vnd.google-apps.spreadsheet") {
           continue;
         }
@@ -304,6 +352,10 @@ function handleList(providedPasscode) {
         var yearMatch = desc.match(/Year of Study:\s*(.+)/);
         var liMatch = desc.match(/LinkedIn:\s*(.+)/);
         var timeMatch = desc.match(/Submitted At:\s*(.+)/);
+        var roleMatch = desc.match(/Submission Role:\s*(.+)/);
+
+        var isPhoto = (roleMatch && roleMatch[1].indexOf("Photo") !== -1) ||
+                      f.getMimeType().indexOf("image/") === 0;
 
         submissions.push({
           timestamp: timeMatch ? timeMatch[1].trim() : Utilities.formatDate(f.getDateCreated(), Session.getScriptTimeZone() || "Asia/Kolkata", "yyyy-MM-dd HH:mm:ss"),
@@ -312,6 +364,10 @@ function handleList(providedPasscode) {
           department: deptMatch ? deptMatch[1].trim() : "-",
           year: yearMatch ? yearMatch[1].trim() : "-",
           linkedin: liMatch ? liMatch[1].trim() : "-",
+          docName: isPhoto ? "" : fName,
+          docUrl: isPhoto ? "" : f.getUrl(),
+          photoNames: isPhoto ? fName : "",
+          photoUrls: isPhoto ? f.getUrl() : "",
           fileName: fName,
           fileUrl: f.getUrl(),
           fileId: f.getId()
@@ -322,7 +378,6 @@ function handleList(providedPasscode) {
     }
   }
 
-  // Reverse so newest submissions appear first
   submissions.reverse();
 
   return jsonResponse({
@@ -343,7 +398,7 @@ function getOrCreateLogSheet(folder) {
     return SpreadsheetApp.open(files.next()).getActiveSheet();
   }
 
-  // Check if exists in root
+  // Check if exists in root Drive
   var rootFiles = DriveApp.getFilesByName(SHEET_NAME);
   if (rootFiles.hasNext()) {
     var rootFile = rootFiles.next();
@@ -373,14 +428,17 @@ function getOrCreateLogSheet(folder) {
     "Department",
     "Year of Study",
     "LinkedIn Profile",
-    "File Name",
-    "Drive File Link",
-    "File ID"
+    "Document Name",
+    "Document Link",
+    "Photo Names",
+    "Photo Links",
+    "Doc ID",
+    "Photo IDs"
   ]);
 
-  // Style header row
+  // Style header row (12 columns)
   try {
-    var headerRange = activeSheet.getRange(1, 1, 1, 9);
+    var headerRange = activeSheet.getRange(1, 1, 1, 12);
     headerRange.setBackground("#1F4433");
     headerRange.setFontColor("#FAF5EA");
     headerRange.setFontWeight("bold");

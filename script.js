@@ -75,119 +75,277 @@ function initUploadForm() {
   const form = document.getElementById("submission-form");
   if (!form) return;
 
-  const dropZone = document.getElementById("drop-zone");
-  const fileInput = document.getElementById("file-input");
-  const filePreview = document.getElementById("file-preview");
-  const fileNameText = document.getElementById("file-name-text");
-  const fileSizeText = document.getElementById("file-size-text");
-  const fileExtBadge = document.getElementById("file-ext-badge");
-  const removeFileBtn = document.getElementById("remove-file-btn");
-  const errorBanner = document.getElementById("form-error-banner");
+  // Document uploader elements
+  const docDropZone = document.getElementById("doc-drop-zone");
+  const docInput = document.getElementById("doc-input");
+  const docPreview = document.getElementById("doc-preview");
+  const docNameText = document.getElementById("doc-name-text");
+  const docSizeText = document.getElementById("doc-size-text");
+  const docExtBadge = document.getElementById("doc-ext-badge");
+  const removeDocBtn = document.getElementById("remove-doc-btn");
 
+  // Photo uploader elements
+  const photoDropZone = document.getElementById("photo-drop-zone");
+  const photoInput = document.getElementById("photo-input");
+  const photosPreviewContainer = document.getElementById("photos-preview-container");
+  const photosGalleryList = document.getElementById("photos-gallery-list");
+  const photosCountLabel = document.getElementById("photos-count-label");
+  const addMorePhotosBtn = document.getElementById("add-more-photos-btn");
+
+  // General feedback and state elements
+  const errorBanner = document.getElementById("form-error-banner");
   const progressState = document.getElementById("upload-progress-state");
   const successState = document.getElementById("upload-success-state");
   const summaryBox = document.getElementById("submission-summary");
   const submitAnotherBtn = document.getElementById("submit-another-btn");
 
-  let currentFile = null;
+  let currentDocFile = null;
+  let currentPhotoFiles = [];
 
-  // Click on dropzone opens native file picker
-  dropZone.addEventListener("click", () => fileInput.click());
+  // ==========================================
+  // 1. DOCUMENT UPLOADER LOGIC
+  // ==========================================
+  if (docDropZone && docInput) {
+    docDropZone.addEventListener("click", () => docInput.click());
 
-  // Keyboard accessibility for dropzone
-  dropZone.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      fileInput.click();
-    }
-  });
-
-  // Drag and Drop events
-  ["dragenter", "dragover"].forEach((eventName) => {
-    dropZone.addEventListener(eventName, (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      dropZone.classList.add("dragover");
+    docDropZone.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        docInput.click();
+      }
     });
-  });
 
-  ["dragleave", "dragend", "drop"].forEach((eventName) => {
-    dropZone.addEventListener(eventName, (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      dropZone.classList.remove("dragover");
+    ["dragenter", "dragover"].forEach((eventName) => {
+      docDropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        docDropZone.classList.add("dragover");
+      });
     });
-  });
 
-  dropZone.addEventListener("drop", (e) => {
-    const dt = e.dataTransfer;
-    if (dt && dt.files && dt.files.length > 0) {
-      handleSelectedFile(dt.files[0]);
-    }
-  });
+    ["dragleave", "dragend", "drop"].forEach((eventName) => {
+      docDropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        docDropZone.classList.remove("dragover");
+      });
+    });
 
-  // File input change
-  fileInput.addEventListener("change", (e) => {
-    if (e.target.files && e.target.files.length > 0) {
-      handleSelectedFile(e.target.files[0]);
-    }
-  });
+    docDropZone.addEventListener("drop", (e) => {
+      const dt = e.dataTransfer;
+      if (dt && dt.files && dt.files.length > 0) {
+        handleSelectedDoc(dt.files[0]);
+      }
+    });
 
-  // Remove file selection
-  removeFileBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    clearSelectedFile();
-  });
+    docInput.addEventListener("change", (e) => {
+      if (e.target.files && e.target.files.length > 0) {
+        handleSelectedDoc(e.target.files[0]);
+      }
+    });
+  }
 
-  function clearSelectedFile() {
-    currentFile = null;
-    fileInput.value = "";
-    filePreview.classList.add("hidden");
-    dropZone.classList.remove("hidden");
+  if (removeDocBtn) {
+    removeDocBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      clearSelectedDoc();
+    });
+  }
+
+  function clearSelectedDoc() {
+    currentDocFile = null;
+    if (docInput) docInput.value = "";
+    if (docPreview) docPreview.classList.add("hidden");
+    if (docDropZone) docDropZone.classList.remove("hidden");
     hideError();
   }
 
-  function handleSelectedFile(file) {
+  function handleSelectedDoc(file) {
     hideError();
 
-    // Size limit check (15 MB)
     if (file.size > MAX_FILE_SIZE_BYTES) {
-      showError(`File is too large (${formatFileSize(file.size)}). Maximum allowed size is 15 MB.`);
-      clearSelectedFile();
+      showError(`Document is too large (${formatFileSize(file.size)}). Maximum allowed size is 15 MB.`);
+      clearSelectedDoc();
       return;
     }
 
-    // Supported extensions check
-    const allowedExtensions = [".pdf", ".doc", ".docx", ".png", ".jpg", ".jpeg"];
+    const allowedDocExts = [".pdf", ".doc", ".docx"];
     const fileExt = "." + file.name.split(".").pop().toLowerCase();
-    if (!allowedExtensions.includes(fileExt)) {
-      showError("Unsupported file type. Please upload a PDF, Word document (.docx, .doc), or photo (.jpg, .png).");
-      clearSelectedFile();
+    if (!allowedDocExts.includes(fileExt)) {
+      showError("Unsupported document type. Please upload a PDF or Word document (.pdf, .docx, .doc).");
+      clearSelectedDoc();
       return;
     }
 
-    currentFile = file;
+    currentDocFile = file;
+    if (docNameText) docNameText.textContent = file.name;
+    if (docSizeText) docSizeText.textContent = formatFileSize(file.size);
+    if (docExtBadge) docExtBadge.textContent = fileExt.replace(".", "").toUpperCase();
 
-    // Update preview card
-    fileNameText.textContent = file.name;
-    fileSizeText.textContent = formatFileSize(file.size);
-    fileExtBadge.textContent = fileExt.replace(".", "").toUpperCase();
+    if (docDropZone) docDropZone.classList.add("hidden");
+    if (docPreview) docPreview.classList.remove("hidden");
+  }
 
-    dropZone.classList.add("hidden");
-    filePreview.classList.remove("hidden");
+  // ==========================================
+  // 2. OBSERVATION PHOTOS UPLOADER LOGIC
+  // ==========================================
+  if (photoDropZone && photoInput) {
+    photoDropZone.addEventListener("click", () => photoInput.click());
+
+    photoDropZone.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        photoInput.click();
+      }
+    });
+
+    ["dragenter", "dragover"].forEach((eventName) => {
+      photoDropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        photoDropZone.classList.add("dragover");
+      });
+    });
+
+    ["dragleave", "dragend", "drop"].forEach((eventName) => {
+      photoDropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        photoDropZone.classList.remove("dragover");
+      });
+    });
+
+    photoDropZone.addEventListener("drop", (e) => {
+      const dt = e.dataTransfer;
+      if (dt && dt.files && dt.files.length > 0) {
+        handleSelectedPhotos(Array.from(dt.files));
+      }
+    });
+
+    photoInput.addEventListener("change", (e) => {
+      if (e.target.files && e.target.files.length > 0) {
+        handleSelectedPhotos(Array.from(e.target.files));
+      }
+    });
+  }
+
+  if (addMorePhotosBtn && photoInput) {
+    addMorePhotosBtn.addEventListener("click", () => photoInput.click());
+  }
+
+  function handleSelectedPhotos(files) {
+    hideError();
+    const allowedPhotoExts = [".jpg", ".jpeg", ".png", ".webp"];
+
+    for (const file of files) {
+      const fileExt = "." + file.name.split(".").pop().toLowerCase();
+      if (!allowedPhotoExts.includes(fileExt)) {
+        showError(`"${file.name}" is not a supported image. Please upload JPG, PNG, or WEBP photos.`);
+        continue;
+      }
+
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        showError(`"${file.name}" exceeds the 15 MB limit.`);
+        continue;
+      }
+
+      // Avoid duplicate file entries
+      const exists = currentPhotoFiles.some(f => f.name === file.name && f.size === file.size);
+      if (!exists) {
+        currentPhotoFiles.push(file);
+      }
+    }
+
+    renderPhotosGallery();
+  }
+
+  function removePhotoAtIndex(idx) {
+    if (idx >= 0 && idx < currentPhotoFiles.length) {
+      currentPhotoFiles.splice(idx, 1);
+      renderPhotosGallery();
+    }
+  }
+
+  function renderPhotosGallery() {
+    if (!photosGalleryList) return;
+
+    if (currentPhotoFiles.length === 0) {
+      if (photosPreviewContainer) photosPreviewContainer.classList.add("hidden");
+      if (photoDropZone) photoDropZone.classList.remove("hidden");
+      return;
+    }
+
+    if (photosCountLabel) {
+      photosCountLabel.textContent = `Selected Photos (${currentPhotoFiles.length})`;
+    }
+
+    photosGalleryList.innerHTML = "";
+
+    currentPhotoFiles.forEach((file, idx) => {
+      const item = document.createElement("div");
+      item.className = "photo-gallery-item";
+
+      const thumbWrap = document.createElement("div");
+      thumbWrap.className = "photo-thumb-wrap";
+
+      const img = document.createElement("img");
+      img.className = "photo-thumb-img";
+      img.src = URL.createObjectURL(file);
+      img.alt = file.name;
+      img.onload = () => URL.revokeObjectURL(img.src);
+      thumbWrap.appendChild(img);
+
+      const meta = document.createElement("div");
+      meta.className = "photo-item-meta";
+      meta.innerHTML = `
+        <span class="photo-item-name" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</span>
+        <span class="photo-item-size">${formatFileSize(file.size)}</span>
+      `;
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "btn-remove-photo-item";
+      removeBtn.setAttribute("aria-label", `Remove ${file.name}`);
+      removeBtn.innerHTML = "&times;";
+      removeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        removePhotoAtIndex(idx);
+      });
+
+      item.appendChild(thumbWrap);
+      item.appendChild(meta);
+      item.appendChild(removeBtn);
+      photosGalleryList.appendChild(item);
+    });
+
+    if (photosPreviewContainer) photosPreviewContainer.classList.remove("hidden");
+    if (photoDropZone) photoDropZone.classList.remove("hidden");
+  }
+
+  function clearAllUploads() {
+    clearSelectedDoc();
+    currentPhotoFiles = [];
+    if (photoInput) photoInput.value = "";
+    renderPhotosGallery();
   }
 
   function showError(msg) {
-    errorBanner.textContent = msg;
-    errorBanner.classList.remove("hidden");
+    if (errorBanner) {
+      errorBanner.textContent = msg;
+      errorBanner.classList.remove("hidden");
+    }
   }
 
   function hideError() {
-    errorBanner.textContent = "";
-    errorBanner.classList.add("hidden");
+    if (errorBanner) {
+      errorBanner.textContent = "";
+      errorBanner.classList.add("hidden");
+    }
   }
 
-  // Form submit handler
+  // ==========================================
+  // 3. FORM SUBMISSION HANDLER
+  // ==========================================
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     hideError();
@@ -203,12 +361,16 @@ function initUploadForm() {
       return;
     }
 
-    if (!currentFile) {
-      showError("Please attach your observation file before submitting.");
+    if (!currentDocFile) {
+      showError("Please upload your reflection write-up document (.pdf, .docx, .doc) in Step 1.");
       return;
     }
 
-    // Friendly reminder if Apps Script URL has not been configured yet
+    if (currentPhotoFiles.length === 0) {
+      showError("Please upload at least one photograph of the observation in Step 2.");
+      return;
+    }
+
     if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL") {
       showError(
         "Setup needed: Please paste your deployed Google Apps Script Web App URL into APPS_SCRIPT_URL in script.js to start receiving submissions in your Google Drive."
@@ -221,24 +383,39 @@ function initUploadForm() {
     progressState.classList.remove("hidden");
 
     try {
-      // Read file bytes as base64 and strip Data URL prefix
-      const rawBase64 = await readFileAsBase64(currentFile);
-      const cleanBase64 = rawBase64.includes("base64,") ? rawBase64.split("base64,")[1] : rawBase64;
+      // 1. Encode write-up document to Base64
+      const rawDocBase64 = await readFileAsBase64(currentDocFile);
+      const cleanDocBase64 = rawDocBase64.includes("base64,") ? rawDocBase64.split("base64,")[1] : rawDocBase64;
 
-      // Keep file name strictly as the actual uploaded file name (no student prefixes)
+      // 2. Encode all photos to Base64 in parallel
+      const photoPayloads = await Promise.all(
+        currentPhotoFiles.map(async (photo) => {
+          const rawPhotoBase64 = await readFileAsBase64(photo);
+          const cleanPhotoBase64 = rawPhotoBase64.includes("base64,") ? rawPhotoBase64.split("base64,")[1] : rawPhotoBase64;
+          return {
+            base64Data: cleanPhotoBase64,
+            fileName: photo.name,
+            mimeType: photo.type || "image/jpeg"
+          };
+        })
+      );
+
       const payload = {
         action: "upload",
-        base64Data: cleanBase64,
-        mimeType: currentFile.type || "application/octet-stream",
-        fileName: currentFile.name,
         name: name,
         regNo: regNo,
         department: department,
         year: year,
-        linkedin: linkedin
+        linkedin: linkedin,
+        doc: {
+          base64Data: cleanDocBase64,
+          fileName: currentDocFile.name,
+          mimeType: currentDocFile.type || "application/octet-stream"
+        },
+        photos: photoPayloads
       };
 
-      // POST to Google Apps Script (using text/plain to prevent CORS preflight OPTIONS rejection)
+      // POST to Google Apps Script (using text/plain to prevent CORS preflight rejection)
       const response = await fetch(APPS_SCRIPT_URL, {
         method: "POST",
         headers: {
@@ -250,22 +427,23 @@ function initUploadForm() {
       const result = await response.json();
 
       if (result.status === "success") {
-        // Show success state
         progressState.classList.add("hidden");
         successState.classList.remove("hidden");
 
         const cleanLi = linkedin.trim();
         const liUrl = cleanLi ? (cleanLi.startsWith("http") ? cleanLi : "https://linkedin.com/in/" + cleanLi.replace(/^@/, "")) : "";
+        const photoNames = currentPhotoFiles.map(f => f.name).join(", ");
 
         summaryBox.innerHTML = `
           <div><strong>Student:</strong> ${escapeHtml(name)} (${escapeHtml(regNo)})</div>
           <div><strong>Department:</strong> ${escapeHtml(department)} &bull; ${escapeHtml(year)}</div>
           <div><strong>LinkedIn:</strong> ${liUrl ? `<a href="${escapeHtml(liUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(cleanLi)}</a>` : "Not provided"}</div>
-          <div><strong>File:</strong> ${escapeHtml(currentFile.name)}</div>
+          <div><strong>Document:</strong> ${escapeHtml(currentDocFile.name)}</div>
+          <div><strong>Photograph(s):</strong> ${escapeHtml(photoNames)} (${currentPhotoFiles.length} photo${currentPhotoFiles.length > 1 ? "s" : ""})</div>
         `;
 
         form.reset();
-        clearSelectedFile();
+        clearAllUploads();
       } else {
         throw new Error(result.message || "Failed to upload to Google Drive.");
       }
@@ -282,7 +460,7 @@ function initUploadForm() {
     submitAnotherBtn.addEventListener("click", () => {
       successState.classList.add("hidden");
       form.classList.remove("hidden");
-      clearSelectedFile();
+      clearAllUploads();
     });
   }
 }

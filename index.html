@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Tamil:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
 
@@ -179,7 +179,7 @@ Nunnokku encourages students to embrace sustainability by noticing meaningful pr
           <span class="tl-num">02</span>
           <div class="tl-body">
             <h3>Capture</h3>
-            <p>Take a clear original photograph.</p>
+            <p>Take a clear original photograph of the sustainable practice or observation you noticed.</p>
           </div>
         </li>
         <li>
@@ -193,9 +193,7 @@ Nunnokku encourages students to embrace sustainability by noticing meaningful pr
           <span class="tl-num">04</span>
           <div class="tl-body">
             <h3>Submit</h3>
-            <p>Submit your photograph and write-up together as a single PDF or Word document through the submission form below.
-
-</p>
+            <p>Upload your reflection write-up document and your observation photo(s) separately through the form below.</p>
           </div>
         </li>
         <li>
@@ -222,8 +220,7 @@ Nunnokku encourages students to embrace sustainability by noticing meaningful pr
           <li>Why did it catch your attention?</li>
           <li>What can others learn from it?</li>
         </ul>
-      
-     
+      </div>
     </div>
   </section>
 
@@ -303,36 +300,84 @@ Nunnokku encourages students to embrace sustainability by noticing meaningful pr
 
           </div>
 
-          <!-- Drag and Drop File Upload Area -->
-          <div class="form-group file-upload-group">
-            <label>Upload Observation Document / Photo <span class="req">*</span></label>
-            <div id="drop-zone" class="drop-zone" tabindex="0" role="button" aria-label="Drop your file here or click to browse">
-              <input type="file" id="file-input" class="file-input" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" required>
-              <div class="drop-zone-prompt">
-                <svg class="upload-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
-                  <path d="M12 32a10 10 0 0 1-2-19.8A14 14 0 0 1 37.6 15 10 10 0 0 1 36 32H12z"/>
-                  <polyline points="20 25 24 21 28 25"/>
-                  <line x1="24" y1="21" x2="24" y2="35"/>
-                </svg>
-                <p class="drop-text"><strong>Click to browse</strong> or drag and drop your file here</p>
-                <p class="drop-hint">PDF, Word (.docx, .doc), or Photo (.jpg, .png) &bull; Max 15MB</p>
+          <!-- Dual Upload Section: 1. Reflection Document & 2. Observation Photos -->
+          <div class="dual-upload-container">
+
+            <!-- Uploader 1: Reflection Document -->
+            <div class="upload-card-box">
+              <div class="upload-card-header">
+                <span class="upload-step-badge">1</span>
+                <div>
+                  <label class="upload-card-label" for="doc-input">Reflection Write-up Document <span class="req">*</span></label>
+                  <p class="upload-card-hint">Your 100–150 word write-up (.pdf, .docx, .doc &bull; Max 15MB)</p>
+                </div>
+              </div>
+
+              <div id="doc-drop-zone" class="drop-zone" tabindex="0" role="button" aria-label="Drop your reflection document here or click to browse">
+                <input type="file" id="doc-input" class="file-input" accept=".pdf,.doc,.docx" required>
+                <div class="drop-zone-prompt">
+                  <svg class="upload-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                    <path d="M14 4h14l10 10v26a4 4 0 0 1-4 4H14a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4z"/>
+                    <polyline points="28 4 28 14 38 14"/>
+                    <line x1="18" y1="24" x2="30" y2="24"/>
+                    <line x1="18" y1="32" x2="30" y2="32"/>
+                  </svg>
+                  <p class="drop-text"><strong>Click to select document</strong> or drag and drop</p>
+                  <p class="drop-hint">PDF or Word (.pdf, .docx, .doc)</p>
+                </div>
+              </div>
+
+              <!-- Document Preview Card (Hidden until selected) -->
+              <div id="doc-preview" class="file-preview hidden">
+                <div class="file-info">
+                  <span class="file-type-badge" id="doc-ext-badge">PDF</span>
+                  <div class="file-meta">
+                    <span class="file-name" id="doc-name-text">document.pdf</span>
+                    <span class="file-size" id="doc-size-text">1.2 MB</span>
+                  </div>
+                </div>
+                <button type="button" id="remove-doc-btn" class="btn-remove-file" aria-label="Remove selected document">&times;</button>
               </div>
             </div>
 
-            <!-- File Preview Card (Hidden until selected) -->
-            <div id="file-preview" class="file-preview hidden">
-              <div class="file-info">
-                <span class="file-type-badge" id="file-ext-badge">PDF</span>
-                <div class="file-meta">
-                  <span class="file-name" id="file-name-text">filename.pdf</span>
-                  <span class="file-size" id="file-size-text">1.2 MB</span>
+            <!-- Uploader 2: Observation Photograph(s) -->
+            <div class="upload-card-box">
+              <div class="upload-card-header">
+                <span class="upload-step-badge">2</span>
+                <div>
+                  <label class="upload-card-label" for="photo-input">Photograph(s) of Observation <span class="req">*</span></label>
+                  <p class="upload-card-hint">Original photo(s) of the practice/observation (.jpg, .jpeg, .png &bull; 1 or more)</p>
                 </div>
               </div>
-              <button type="button" id="remove-file-btn" class="btn-remove-file" aria-label="Remove selected file">&times;</button>
+
+              <div id="photo-drop-zone" class="drop-zone" tabindex="0" role="button" aria-label="Drop your observation photos here or click to browse">
+                <input type="file" id="photo-input" class="file-input" accept=".jpg,.jpeg,.png,.webp" multiple required>
+                <div class="drop-zone-prompt">
+                  <svg class="upload-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                    <rect x="6" y="8" width="36" height="32" rx="4"/>
+                    <circle cx="16" cy="18" r="4"/>
+                    <polyline points="42 32 32 22 14 40"/>
+                  </svg>
+                  <p class="drop-text"><strong>Click to select photo(s)</strong> or drag and drop</p>
+                  <p class="drop-hint">JPG, PNG, WEBP &bull; Multiple photos supported</p>
+                </div>
+              </div>
+
+              <!-- Photos Preview Gallery (Hidden until selected) -->
+              <div id="photos-preview-container" class="photos-preview-container hidden">
+                <div class="photos-header-row">
+                  <span id="photos-count-label" class="photos-count-label">Selected Photos (0)</span>
+                  <button type="button" id="add-more-photos-btn" class="btn-add-more">+ Add more photos</button>
+                </div>
+                <div id="photos-gallery-list" class="photos-gallery-list">
+                  <!-- Dynamically populated photo items -->
+                </div>
+              </div>
             </div>
-            
-            <div id="form-error-banner" class="form-feedback error hidden" role="alert"></div>
+
           </div>
+
+          <div id="form-error-banner" class="form-feedback error hidden" role="alert"></div>
 
           <!-- Submit Button & Action Bar -->
           <div class="form-actions">
@@ -346,7 +391,7 @@ Nunnokku encourages students to embrace sustainability by noticing meaningful pr
         <div id="upload-progress-state" class="upload-state hidden" aria-live="polite">
           <div class="state-spinner" aria-hidden="true"></div>
           <h3 class="state-title">Uploading observation...</h3>
-          <p class="state-desc" id="progress-desc">Uploading your file securely to Google Drive. Please don't close this window.</p>
+          <p class="state-desc" id="progress-desc">Uploading your write-up and photo(s) securely to Google Drive. Please don't close this window.</p>
           <div class="progress-bar-track">
             <div id="progress-bar-fill" class="progress-bar-fill"></div>
           </div>
@@ -374,7 +419,7 @@ Nunnokku encourages students to embrace sustainability by noticing meaningful pr
       <div class="info-box">
         <h3>Before submitting</h3>
         <ul class="check-list">
-          <li>Use your own photograph.</li>
+          <li>Use your own original photograph(s) of the observation (not taken from the internet, and not a personal selfie/portrait).</li>
           <li>Write 100–150 words.</li>
           <li>Focus on a real observation.</li>
           <li>Mention the location/context where appropriate.</li>

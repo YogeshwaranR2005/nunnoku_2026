@@ -368,8 +368,8 @@ body {
                 <th>Department</th>
                 <th>Year</th>
                 <th>LinkedIn</th>
-                <th>File Name</th>
-                <th style="text-align: right;">Action</th>
+                <th>Reflection Document</th>
+                <th>Observation Photo(s)</th>
               </tr>
             </thead>
             <tbody id="table-body">
@@ -522,6 +522,22 @@ function renderTable(items) {
     const cleanLi = (sub.linkedin || "").trim();
     const liUrl = cleanLi ? (cleanLi.startsWith("http") ? cleanLi : "https://linkedin.com/in/" + cleanLi.replace(/^@/, "")) : "";
 
+    // Document cell
+    const docUrl = sub.docUrl || sub.fileUrl || "";
+    const docName = sub.docName || sub.fileName || "Document";
+
+    // Photos cell
+    const photoUrls = (sub.photoUrls || "").split(",").map(u => u.trim()).filter(Boolean);
+    const photoNames = (sub.photoNames || "").split(",").map(n => n.trim()).filter(Boolean);
+
+    let photosHtml = `<span style="color:var(--ink-soft);">-</span>`;
+    if (photoUrls.length > 0) {
+      photosHtml = photoUrls.map((pUrl, pIdx) => {
+        const pName = photoNames[pIdx] || `Photo ${pIdx + 1}`;
+        return `<a href="${escapeHtml(pUrl)}" target="_blank" rel="noopener noreferrer" class="tag-badge" style="background:#e8f4ec; color:#1F4433; text-decoration:none; margin: 2px 3px;" title="${escapeHtml(pName)}">Photo ${pIdx + 1} ↗</a>`;
+      }).join("");
+    }
+
     return `
       <tr>
         <td style="color: var(--ink-soft); font-weight: 600;">${idx + 1}</td>
@@ -533,13 +549,11 @@ function renderTable(items) {
         <td>
           ${liUrl ? `<a href="${escapeHtml(liUrl)}" target="_blank" rel="noopener noreferrer" class="tag-badge" style="background:#0a66c2; color:#fff; text-decoration:none;" title="${escapeHtml(cleanLi)}">LinkedIn ↗</a>` : `<span style="color:var(--ink-soft);">-</span>`}
         </td>
-        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(sub.fileName)}">
-          ${escapeHtml(sub.fileName || "File")}
+        <td>
+          ${docUrl && docUrl !== "#" ? `<a href="${escapeHtml(docUrl)}" target="_blank" rel="noopener noreferrer" class="tag-badge" style="background:var(--sage); color:var(--green-deep); text-decoration:none; max-width: 170px; overflow: hidden; text-overflow: ellipsis; display: inline-block; vertical-align: middle;" title="${escapeHtml(docName)}">${escapeHtml(docName)} ↗</a>` : `<span style="color:var(--ink-soft);">-</span>`}
         </td>
-        <td style="text-align: right; white-space: nowrap;">
-          <a href="${escapeHtml(sub.fileUrl || '#')}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm" style="padding: 0.25rem 0.65rem;">
-            View ↗
-          </a>
+        <td style="white-space: nowrap;">
+          ${photosHtml}
         </td>
       </tr>
     `;
@@ -553,7 +567,7 @@ exportCsvBtn.addEventListener("click", () => {
   }
 
   let csvContent = "data:text/csv;charset=utf-8,";
-  csvContent += "Index,Timestamp,Student Name,Register No,Department,Year,LinkedIn,File Name,Drive Link\n";
+  csvContent += "Index,Timestamp,Student Name,Register No,Department,Year,LinkedIn,Document Name,Document Link,Photo Names,Photo Links\n";
 
   allSubmissions.forEach((sub, i) => {
     const row = [
@@ -564,8 +578,10 @@ exportCsvBtn.addEventListener("click", () => {
       `"${(sub.department || "").replace(/"/g, '""')}"`,
       `"${(sub.year || "").replace(/"/g, '""')}"`,
       `"${(sub.linkedin || "").replace(/"/g, '""')}"`,
-      `"${(sub.fileName || "").replace(/"/g, '""')}"`,
-      `"${(sub.fileUrl || "").replace(/"/g, '""')}"`
+      `"${(sub.docName || sub.fileName || "").replace(/"/g, '""')}"`,
+      `"${(sub.docUrl || sub.fileUrl || "").replace(/"/g, '""')}"`,
+      `"${(sub.photoNames || "").replace(/"/g, '""')}"`,
+      `"${(sub.photoUrls || "").replace(/"/g, '""')}"`
     ];
     csvContent += row.join(",") + "\n";
   });
