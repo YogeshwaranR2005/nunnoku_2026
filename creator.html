@@ -370,6 +370,7 @@ body {
                 <th>LinkedIn</th>
                 <th>Reflection Document</th>
                 <th>Observation Photo(s)</th>
+                <th style="text-align: right;">Folder</th>
               </tr>
             </thead>
             <tbody id="table-body">
@@ -555,6 +556,11 @@ function renderTable(items) {
         <td style="white-space: nowrap;">
           ${photosHtml}
         </td>
+        <td style="text-align: right; white-space: nowrap;">
+          <a href="${escapeHtml(sub.folderUrl || sub.docUrl || sub.fileUrl || DRIVE_FOLDER_URL)}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm" style="padding: 0.22rem 0.6rem; font-size: 0.78rem;">
+            📁 Folder ↗
+          </a>
+        </td>
       </tr>
     `;
   }).join("");
@@ -567,7 +573,7 @@ exportCsvBtn.addEventListener("click", () => {
   }
 
   let csvContent = "data:text/csv;charset=utf-8,";
-  csvContent += "Index,Timestamp,Student Name,Register No,Department,Year,LinkedIn,Document Name,Document Link,Photo Names,Photo Links\n";
+  csvContent += "Index,Timestamp,Student Name,Register No,Department,Year,LinkedIn,Document Name,Document Link,Photo Names,Photo Links,Submission Folder\n";
 
   allSubmissions.forEach((sub, i) => {
     const row = [
@@ -581,7 +587,8 @@ exportCsvBtn.addEventListener("click", () => {
       `"${(sub.docName || sub.fileName || "").replace(/"/g, '""')}"`,
       `"${(sub.docUrl || sub.fileUrl || "").replace(/"/g, '""')}"`,
       `"${(sub.photoNames || "").replace(/"/g, '""')}"`,
-      `"${(sub.photoUrls || "").replace(/"/g, '""')}"`
+      `"${(sub.photoUrls || "").replace(/"/g, '""')}"`,
+      `"${(sub.folderUrl || "").replace(/"/g, '""')}"`
     ];
     csvContent += row.join(",") + "\n";
   });

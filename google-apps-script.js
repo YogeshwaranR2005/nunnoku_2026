@@ -197,7 +197,7 @@ function handleUpload(data) {
   var docUrl = "";
   var docId = "";
 
-  // 1. Process Reflection Document
+  // 1. Process Reflection Document Object
   var docObj = data.doc;
   if (!docObj && data.base64Data && !data.photos) {
     // Legacy single-file fallback
@@ -208,22 +208,51 @@ function handleUpload(data) {
     };
   }
 
+  if (docObj && docObj.fileName) {
+    docName = (docObj.fileName || "writeup.docx").trim();
+  }
+
+  // 2. Create Dedicated Subfolder in Drive named after the file name
+  // E.g. "antenna poster -triangular"
+  var subFolderName = docName ? docName.replace(/\.[^/.]+$/, "").trim() : "";
+  if (!subFolderName) subFolderName = docName || (studentName + " - Observation");
+
+  var targetFolder;
+  try {
+    targetFolder = folder.createFolder(subFolderName);
+    targetFolder.setDescription(
+      "Nunnokku Sustainability Observation Submission\n" +
+      "---------------------------------------------------\n" +
+      "Student Name: " + studentName + "\n" +
+      "Register/Roll No: " + regNo + "\n" +
+      "Department: " + department + "\n" +
+      "Year of Study: " + year + "\n" +
+      "LinkedIn: " + linkedin + "\n" +
+      "Submitted At: " + formattedTime + "\n" +
+      "Document File: " + docName
+    );
+  } catch (createFolderErr) {
+    targetFolder = folder; // Fallback to parent folder if creation fails
+  }
+
+  var targetFolderUrl = targetFolder.getUrl();
+
+  // 3. Save Reflection Document inside targetFolder
   if (docObj && docObj.base64Data) {
     var rawDocB64 = docObj.base64Data;
     var b64Idx = rawDocB64.indexOf("base64,");
     if (b64Idx !== -1) rawDocB64 = rawDocB64.substring(b64Idx + 7);
 
     var docBytes = Utilities.base64Decode(rawDocB64);
-    docName = (docObj.fileName || "writeup.docx").trim();
     var docMime = docObj.mimeType || "application/octet-stream";
-    var docBlob = Utilities.newBlob(docBytes, docMime, docName);
-    var docFile = folder.createFile(docBlob);
+    var docBlob = Utilities.newBlob(docBytes, docMime, docName || "writeup.docx");
+    var docFile = targetFolder.createFile(docBlob);
     docFile.setDescription(buildDesc("Observation Write-up Document", docName));
     docUrl = docFile.getUrl();
     docId = docFile.getId();
   }
 
-  // 2. Process Observation Photograph(s)
+  // 4. Save Observation Photograph(s) inside targetFolder
   var photoList = data.photos || [];
   if (data.photo) photoList.push(data.photo);
 
@@ -239,7 +268,7 @@ function handleUpload(data) {
       var pName = (pObj.fileName || "observation_photo_" + (i + 1) + ".jpg").trim();
       var pMime = pObj.mimeType || "image/jpeg";
       var pBlob = Utilities.newBlob(pBytes, pMime, pName);
-      var pFile = folder.createFile(pBlob);
+      var pFile = targetFolder.createFile(pBlob);
       pFile.setDescription(buildDesc("Observation Photograph (" + (i + 1) + ")", pName));
       savedPhotos.push({
         fileName: pName,
@@ -253,8 +282,8 @@ function handleUpload(data) {
   var photoUrlsStr = savedPhotos.map(function(p) { return p.fileUrl; }).join(", ");
   var photoIdsStr = savedPhotos.map(function(p) { return p.fileId; }).join(", ");
 
-  // 3. Log to Google Sheet
-  // Columns: [Timestamp, Student Name, Register No, Department, Year, LinkedIn, Doc Name, Doc Link, Photo Names, Photo Links, Doc ID, Photo IDs]
+  // 5. Log to Google Sheet
+  // Columns: [Timestamp, Student Name, Register No, Department, Year, LinkedIn, Doc Name, Doc Link, Photo Names, Photo Links, Folder Link, Doc ID, Photo IDs]
   logToSheet(folder, [
     formattedTime,
     studentName,
@@ -266,6 +295,7 @@ function handleUpload(data) {
     docUrl || "-",
     photoNamesStr || "-",
     photoUrlsStr || "-",
+    targetFolderUrl || "-",
     docId || "-",
     photoIdsStr || "-"
   ]);
@@ -275,6 +305,7 @@ function handleUpload(data) {
     message: "Observation successfully submitted!",
     docName: docName,
     docUrl: docUrl,
+    folderUrl: targetFolderUrl,
     photos: savedPhotos,
     timestamp: formattedTime
   });
@@ -312,6 +343,7 @@ function handleList(providedPasscode) {
         var docUrl = isNewSchema ? (row[7] || "") : (row[7] || "");
         var photoNames = isNewSchema ? (row[8] || "") : "";
         var photoUrls = isNewSchema ? (row[9] || "") : "";
+        var folderUrl = isNewSchema && row[10] ? row[10] : "";
 
         submissions.push({
           timestamp: row[0],
@@ -324,6 +356,7 @@ function handleList(providedPasscode) {
           docUrl: docUrl,
           photoNames: photoNames,
           photoUrls: photoUrls,
+          folderUrl: folderUrl,
           // Compatibility fallbacks
           fileName: docName || photoNames || "File",
           fileUrl: docUrl || (photoUrls ? photoUrls.split(",")[0].trim() : "#")
@@ -432,13 +465,14 @@ function getOrCreateLogSheet(folder) {
     "Document Link",
     "Photo Names",
     "Photo Links",
+    "Submission Folder Link",
     "Doc ID",
     "Photo IDs"
   ]);
 
-  // Style header row (12 columns)
+  // Style header row (13 columns)
   try {
-    var headerRange = activeSheet.getRange(1, 1, 1, 12);
+    var headerRange = activeSheet.getRange(1, 1, 1, 13);
     headerRange.setBackground("#1F4433");
     headerRange.setFontColor("#FAF5EA");
     headerRange.setFontWeight("bold");
