@@ -483,11 +483,19 @@ function getOrCreateLogSheet(folder) {
 }
 
 function logToSheet(folder, rowData) {
+  var lock = LockService.getScriptLock();
   try {
+    // Wait up to 30 seconds for any concurrent execution to finish writing
+    lock.waitLock(30000);
     var sheet = getOrCreateLogSheet(folder);
     sheet.appendRow(rowData);
+    SpreadsheetApp.flush();
   } catch (err) {
     Logger.log("Failed to log to sheet: " + err.toString());
+  } finally {
+    try {
+      lock.releaseLock();
+    } catch (e) {}
   }
 }
 
