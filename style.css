@@ -586,6 +586,9 @@ a { color: inherit; }
 }
 
 .form-group input[type="text"],
+.form-group input[type="tel"],
+.form-group input[type="email"],
+.form-group input:not([type="file"]),
 .select-wrapper select,
 .passcode-input,
 .dash-search-bar input {
@@ -602,6 +605,9 @@ a { color: inherit; }
 }
 
 .form-group input[type="text"]:focus,
+.form-group input[type="tel"]:focus,
+.form-group input[type="email"]:focus,
+.form-group input:not([type="file"]):focus,
 .select-wrapper select:focus,
 .passcode-input:focus,
 .dash-search-bar input:focus {
