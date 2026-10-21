@@ -354,10 +354,18 @@ function initUploadForm() {
     const regNo = document.getElementById("student-reg").value.trim();
     const department = document.getElementById("student-dept").value;
     const year = document.getElementById("student-year").value;
+    const phoneInput = document.getElementById("student-phone");
+    const phone = phoneInput ? phoneInput.value.trim() : "";
     const linkedin = document.getElementById("student-linkedin").value.trim();
 
-    if (!name || !regNo || !department || !year || !linkedin) {
-      showError("Please fill out all required student details including your LinkedIn ID.");
+    if (!name || !regNo || !department || !year || !phone || !linkedin) {
+      showError("Please fill out all required student details including your Phone Number and LinkedIn ID.");
+      return;
+    }
+
+    const phoneDigits = phone.replace(/\D/g, "");
+    if (phoneDigits.length < 10) {
+      showError("Please enter a valid 10-digit phone number.");
       return;
     }
 
@@ -406,6 +414,7 @@ function initUploadForm() {
         regNo: regNo,
         department: department,
         year: year,
+        phone: phone,
         linkedin: linkedin,
         doc: {
           base64Data: cleanDocBase64,
@@ -437,6 +446,7 @@ function initUploadForm() {
         summaryBox.innerHTML = `
           <div><strong>Student:</strong> ${escapeHtml(name)} (${escapeHtml(regNo)})</div>
           <div><strong>Department:</strong> ${escapeHtml(department)} &bull; ${escapeHtml(year)}</div>
+          <div><strong>Phone:</strong> ${escapeHtml(phone)}</div>
           <div><strong>LinkedIn:</strong> ${liUrl ? `<a href="${escapeHtml(liUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(cleanLi)}</a>` : "Not provided"}</div>
           <div><strong>Document:</strong> ${escapeHtml(currentDocFile.name)}</div>
           <div><strong>Photograph(s):</strong> ${escapeHtml(photoNames)} (${currentPhotoFiles.length} photo${currentPhotoFiles.length > 1 ? "s" : ""})</div>
@@ -646,8 +656,9 @@ function initCreatorPortal() {
       const name = (sub.name || "").toLowerCase();
       const reg = (sub.regNo || "").toLowerCase();
       const dept = (sub.department || "").toLowerCase();
+      const phone = (sub.phone || "").toLowerCase();
       const file = (sub.fileName || "").toLowerCase();
-      return name.includes(query) || reg.includes(query) || dept.includes(query) || file.includes(query);
+      return name.includes(query) || reg.includes(query) || dept.includes(query) || phone.includes(query) || file.includes(query);
     });
 
     renderSubmissions(filtered);
@@ -680,6 +691,7 @@ function initCreatorPortal() {
               </div>
               <div class="sub-meta">
                 <span>Year: ${escapeHtml(sub.year || "-")}</span>
+                ${sub.phone ? `<span>&bull;</span><span>📞 ${escapeHtml(sub.phone)}</span>` : ""}
                 <span>&bull;</span>
                 <span>${escapeHtml(sub.fileName || "File")}</span>
                 <span>&bull;</span>

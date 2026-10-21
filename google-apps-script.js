@@ -80,6 +80,7 @@ function setupSheet() {
       var regMatch = desc.match(/Register\/Roll No:\s*(.+)/);
       var deptMatch = desc.match(/Department:\s*(.+)/);
       var yearMatch = desc.match(/Year of Study:\s*(.+)/);
+      var phoneMatch = desc.match(/Phone Number:\s*(.+)/);
       var liMatch = desc.match(/LinkedIn:\s*(.+)/);
       var timeMatch = desc.match(/Submitted At:\s*(.+)/);
 
@@ -89,9 +90,13 @@ function setupSheet() {
         regMatch ? regMatch[1].trim() : "-",
         deptMatch ? deptMatch[1].trim() : "-",
         yearMatch ? yearMatch[1].trim() : "-",
+        phoneMatch ? phoneMatch[1].trim() : "-",
         liMatch ? liMatch[1].trim() : "-",
         f.getName(),
         f.getUrl(),
+        "",
+        "",
+        "",
         fId
       ]);
       syncedCount++;
@@ -160,6 +165,7 @@ function handleUpload(data) {
   var regNo = (data.regNo || "").trim();
   var department = (data.department || "").trim();
   var year = (data.year || "").trim();
+  var phone = (data.phone || "").trim();
   var linkedin = (data.linkedin || "").trim();
 
   if (!studentName || !regNo) {
@@ -188,6 +194,7 @@ function handleUpload(data) {
            "Register/Roll No: " + regNo + "\n" +
            "Department: " + department + "\n" +
            "Year of Study: " + year + "\n" +
+           "Phone Number: " + phone + "\n" +
            "LinkedIn: " + linkedin + "\n" +
            "Submitted At: " + formattedTime + "\n" +
            "Original File: " + origName;
@@ -227,6 +234,7 @@ function handleUpload(data) {
       "Register/Roll No: " + regNo + "\n" +
       "Department: " + department + "\n" +
       "Year of Study: " + year + "\n" +
+      "Phone Number: " + phone + "\n" +
       "LinkedIn: " + linkedin + "\n" +
       "Submitted At: " + formattedTime + "\n" +
       "Document File: " + docName
@@ -283,13 +291,14 @@ function handleUpload(data) {
   var photoIdsStr = savedPhotos.map(function(p) { return p.fileId; }).join(", ");
 
   // 5. Log to Google Sheet
-  // Columns: [Timestamp, Student Name, Register No, Department, Year, LinkedIn, Doc Name, Doc Link, Photo Names, Photo Links, Folder Link, Doc ID, Photo IDs]
+  // Columns: [Timestamp, Student Name, Register No, Department, Year, Phone Number, LinkedIn, Doc Name, Doc Link, Photo Names, Photo Links, Folder Link, Doc ID, Photo IDs]
   logToSheet(folder, [
     formattedTime,
     studentName,
     regNo,
     department,
     year,
+    phone || "-",
     linkedin,
     docName || "-",
     docUrl || "-",
@@ -334,33 +343,62 @@ function handleList(providedPasscode) {
     var sheet = getOrCreateLogSheet(folder);
     var data = sheet.getDataRange().getValues();
 
-    for (var i = 1; i < data.length; i++) {
-      var row = data[i];
-      if (row[0] || row[1]) {
-        var isNewSchema = data[0].length >= 10 && String(data[0][6]).indexOf("Document") !== -1;
-        
-        var docName = isNewSchema ? (row[6] || "") : (row[6] || "");
-        var docUrl = isNewSchema ? (row[7] || "") : (row[7] || "");
-        var photoNames = isNewSchema ? (row[8] || "") : "";
-        var photoUrls = isNewSchema ? (row[9] || "") : "";
-        var folderUrl = isNewSchema && row[10] ? row[10] : "";
+    if (data.length > 1) {
+      // Build dynamic column index mapping from headers
+      var headers = data[0].map(function(h) { return String(h || "").trim().toLowerCase(); });
+      
+      var cTime = headers.indexOf("timestamp");
+      var cName = headers.indexOf("student name");
+      var cReg = headers.indexOf("register no");
+      var cDept = headers.indexOf("department");
+      var cYear = headers.indexOf("year of study");
+      var cPhone = headers.indexOf("phone number");
+      if (cPhone === -1) cPhone = headers.indexOf("phone");
+      var cLi = headers.indexOf("linkedin profile");
+      if (cLi === -1) cLi = headers.indexOf("linkedin");
+      var cDocName = headers.indexOf("document name");
+      var cDocUrl = headers.indexOf("document link");
+      var cPhotoNames = headers.indexOf("photo names");
+      var cPhotoUrls = headers.indexOf("photo links");
+      var cFolder = headers.indexOf("submission folder link");
+      if (cFolder === -1) cFolder = headers.indexOf("folder link");
 
-        submissions.push({
-          timestamp: row[0],
-          name: row[1],
-          regNo: row[2],
-          department: row[3],
-          year: row[4],
-          linkedin: row[5],
-          docName: docName,
-          docUrl: docUrl,
-          photoNames: photoNames,
-          photoUrls: photoUrls,
-          folderUrl: folderUrl,
-          // Compatibility fallbacks
-          fileName: docName || photoNames || "File",
-          fileUrl: docUrl || (photoUrls ? photoUrls.split(",")[0].trim() : "#")
-        });
+      var hasExplicitPhone = cPhone !== -1;
+
+      for (var i = 1; i < data.length; i++) {
+        var row = data[i];
+        if (row[0] || row[1]) {
+          var timeVal = cTime !== -1 ? row[cTime] : row[0];
+          var nameVal = cName !== -1 ? row[cName] : row[1];
+          var regVal = cReg !== -1 ? row[cReg] : row[2];
+          var deptVal = cDept !== -1 ? row[cDept] : row[3];
+          var yearVal = cYear !== -1 ? row[cYear] : row[4];
+          var phoneVal = hasExplicitPhone ? (row[cPhone] || "-") : "-";
+          var liVal = cLi !== -1 ? (row[cLi] || "") : (hasExplicitPhone ? (row[6] || "") : (row[5] || ""));
+          var docNameVal = cDocName !== -1 ? (row[cDocName] || "") : (hasExplicitPhone ? (row[7] || "") : (row[6] || ""));
+          var docUrlVal = cDocUrl !== -1 ? (row[cDocUrl] || "") : (hasExplicitPhone ? (row[8] || "") : (row[7] || ""));
+          var photoNamesVal = cPhotoNames !== -1 ? (row[cPhotoNames] || "") : (hasExplicitPhone ? (row[9] || "") : (row[8] || ""));
+          var photoUrlsVal = cPhotoUrls !== -1 ? (row[cPhotoUrls] || "") : (hasExplicitPhone ? (row[10] || "") : (row[9] || ""));
+          var folderVal = cFolder !== -1 ? (row[cFolder] || "") : (hasExplicitPhone ? (row[11] || "") : (row[10] || ""));
+
+          submissions.push({
+            timestamp: timeVal,
+            name: nameVal,
+            regNo: regVal,
+            department: deptVal,
+            year: yearVal,
+            phone: phoneVal,
+            linkedin: liVal,
+            docName: docNameVal,
+            docUrl: docUrlVal,
+            photoNames: photoNamesVal,
+            photoUrls: photoUrlsVal,
+            folderUrl: folderVal,
+            // Compatibility fallbacks
+            fileName: docNameVal || photoNamesVal || "File",
+            fileUrl: docUrlVal || (photoUrlsVal ? photoUrlsVal.split(",")[0].trim() : "#")
+          });
+        }
       }
     }
   } catch (sheetErr) {
@@ -383,6 +421,7 @@ function handleList(providedPasscode) {
         var regMatch = desc.match(/Register\/Roll No:\s*(.+)/);
         var deptMatch = desc.match(/Department:\s*(.+)/);
         var yearMatch = desc.match(/Year of Study:\s*(.+)/);
+        var phoneMatch = desc.match(/Phone Number:\s*(.+)/);
         var liMatch = desc.match(/LinkedIn:\s*(.+)/);
         var timeMatch = desc.match(/Submitted At:\s*(.+)/);
         var roleMatch = desc.match(/Submission Role:\s*(.+)/);
@@ -396,6 +435,7 @@ function handleList(providedPasscode) {
           regNo: regMatch ? regMatch[1].trim() : "-",
           department: deptMatch ? deptMatch[1].trim() : "-",
           year: yearMatch ? yearMatch[1].trim() : "-",
+          phone: phoneMatch ? phoneMatch[1].trim() : "-",
           linkedin: liMatch ? liMatch[1].trim() : "-",
           docName: isPhoto ? "" : fName,
           docUrl: isPhoto ? "" : f.getUrl(),
@@ -426,58 +466,84 @@ function handleList(providedPasscode) {
 // ==========================================
 
 function getOrCreateLogSheet(folder) {
+  var activeSheet;
   var files = folder.getFilesByName(SHEET_NAME);
   if (files.hasNext()) {
-    return SpreadsheetApp.open(files.next()).getActiveSheet();
+    activeSheet = SpreadsheetApp.open(files.next()).getActiveSheet();
+  } else {
+    // Check if exists in root Drive
+    var rootFiles = DriveApp.getFilesByName(SHEET_NAME);
+    if (rootFiles.hasNext()) {
+      var rootFile = rootFiles.next();
+      try {
+        rootFile.moveTo(folder);
+      } catch (e) {}
+      activeSheet = SpreadsheetApp.open(rootFile).getActiveSheet();
+    } else {
+      // Create new tracking sheet directly in the Drive folder
+      var newSpreadsheet = SpreadsheetApp.create(SHEET_NAME);
+      var sheetFile = DriveApp.getFileById(newSpreadsheet.getId());
+      try {
+        sheetFile.moveTo(folder);
+      } catch (e) {
+        try {
+          folder.addFile(sheetFile);
+          DriveApp.getRootFolder().removeFile(sheetFile);
+        } catch (e2) {}
+      }
+
+      activeSheet = newSpreadsheet.getActiveSheet();
+      activeSheet.appendRow([
+        "Timestamp",
+        "Student Name",
+        "Register No",
+        "Department",
+        "Year of Study",
+        "Phone Number",
+        "LinkedIn Profile",
+        "Document Name",
+        "Document Link",
+        "Photo Names",
+        "Photo Links",
+        "Submission Folder Link",
+        "Doc ID",
+        "Photo IDs"
+      ]);
+
+      // Style header row (14 columns)
+      try {
+        var headerRange = activeSheet.getRange(1, 1, 1, 14);
+        headerRange.setBackground("#1F4433");
+        headerRange.setFontColor("#FAF5EA");
+        headerRange.setFontWeight("bold");
+        activeSheet.setFrozenRows(1);
+      } catch (styleErr) {}
+
+      return activeSheet;
+    }
   }
 
-  // Check if exists in root Drive
-  var rootFiles = DriveApp.getFilesByName(SHEET_NAME);
-  if (rootFiles.hasNext()) {
-    var rootFile = rootFiles.next();
-    try {
-      rootFile.moveTo(folder);
-    } catch (e) {}
-    return SpreadsheetApp.open(rootFile).getActiveSheet();
-  }
-
-  // Create new tracking sheet directly in the Drive folder
-  var newSpreadsheet = SpreadsheetApp.create(SHEET_NAME);
-  var sheetFile = DriveApp.getFileById(newSpreadsheet.getId());
+  // Ensure existing sheet has Phone Number column
   try {
-    sheetFile.moveTo(folder);
-  } catch (e) {
-    try {
-      folder.addFile(sheetFile);
-      DriveApp.getRootFolder().removeFile(sheetFile);
-    } catch (e2) {}
+    var lastCol = Math.max(activeSheet.getLastColumn(), 1);
+    var headerVals = activeSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    var lowerHeaders = headerVals.map(function(c) { return String(c || "").toLowerCase().trim(); });
+    if (lowerHeaders.indexOf("phone number") === -1 && lowerHeaders.indexOf("phone") === -1) {
+      var liIndex = lowerHeaders.indexOf("linkedin profile");
+      if (liIndex === -1) liIndex = lowerHeaders.indexOf("linkedin");
+      var insertCol = liIndex !== -1 ? (liIndex + 1) : 6;
+      activeSheet.insertColumnBefore(insertCol);
+      var headerCell = activeSheet.getRange(1, insertCol);
+      headerCell.setValue("Phone Number");
+      try {
+        headerCell.setBackground("#1F4433");
+        headerCell.setFontColor("#FAF5EA");
+        headerCell.setFontWeight("bold");
+      } catch (stErr) {}
+    }
+  } catch (colErr) {
+    Logger.log("Notice: Auto-migration of phone column: " + colErr.toString());
   }
-
-  var activeSheet = newSpreadsheet.getActiveSheet();
-  activeSheet.appendRow([
-    "Timestamp",
-    "Student Name",
-    "Register No",
-    "Department",
-    "Year of Study",
-    "LinkedIn Profile",
-    "Document Name",
-    "Document Link",
-    "Photo Names",
-    "Photo Links",
-    "Submission Folder Link",
-    "Doc ID",
-    "Photo IDs"
-  ]);
-
-  // Style header row (13 columns)
-  try {
-    var headerRange = activeSheet.getRange(1, 1, 1, 13);
-    headerRange.setBackground("#1F4433");
-    headerRange.setFontColor("#FAF5EA");
-    headerRange.setFontWeight("bold");
-    activeSheet.setFrozenRows(1);
-  } catch (styleErr) {}
 
   return activeSheet;
 }

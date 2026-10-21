@@ -367,6 +367,7 @@ body {
                 <th>Register No</th>
                 <th>Department</th>
                 <th>Year</th>
+                <th>Phone</th>
                 <th>LinkedIn</th>
                 <th>Reflection Document</th>
                 <th>Observation Photo(s)</th>
@@ -454,7 +455,10 @@ searchInput.addEventListener("input", () => {
            (s.regNo || "").toLowerCase().includes(q) ||
            (s.department || "").toLowerCase().includes(q) ||
            (s.year || "").toLowerCase().includes(q) ||
+           (s.phone || "").toLowerCase().includes(q) ||
            (s.linkedin || "").toLowerCase().includes(q) ||
+           (s.docName || "").toLowerCase().includes(q) ||
+           (s.photoNames || "").toLowerCase().includes(q) ||
            (s.fileName || "").toLowerCase().includes(q);
   });
   renderTable(filtered);
@@ -463,7 +467,7 @@ searchInput.addEventListener("input", () => {
 async function fetchSubmissions() {
   tableBody.innerHTML = `
     <tr>
-      <td colspan="9" class="loading-spinner-box">
+      <td colspan="11" class="loading-spinner-box">
         <div class="state-spinner" style="margin: 0 auto 0.8rem;"></div>
         <p style="color: var(--ink-soft); margin: 0;">Loading submissions from your Google Sheet &amp; Drive...</p>
       </td>
@@ -511,7 +515,7 @@ function renderTable(items) {
   if (!items || items.length === 0) {
     tableBody.innerHTML = `
       <tr>
-        <td colspan="9" class="empty-state">
+        <td colspan="11" class="empty-state">
           <p>No submissions found matching your search.</p>
         </td>
       </tr>
@@ -547,6 +551,9 @@ function renderTable(items) {
         <td><span class="tag-badge">${escapeHtml(sub.regNo || "-")}</span></td>
         <td>${escapeHtml(sub.department || "-")}</td>
         <td><span class="tag-badge" style="background: var(--paper-deep);">${escapeHtml(sub.year || "-")}</span></td>
+        <td style="white-space: nowrap;">
+          ${sub.phone && sub.phone !== "-" ? `<a href="tel:${escapeHtml(sub.phone)}" style="color: var(--forest); text-decoration: none; font-weight: 500;" title="Call student">${escapeHtml(sub.phone)}</a>` : `<span style="color:var(--ink-soft);">-</span>`}
+        </td>
         <td>
           ${liUrl ? `<a href="${escapeHtml(liUrl)}" target="_blank" rel="noopener noreferrer" class="tag-badge" style="background:#0a66c2; color:#fff; text-decoration:none;" title="${escapeHtml(cleanLi)}">LinkedIn ↗</a>` : `<span style="color:var(--ink-soft);">-</span>`}
         </td>
@@ -573,7 +580,7 @@ exportCsvBtn.addEventListener("click", () => {
   }
 
   let csvContent = "data:text/csv;charset=utf-8,";
-  csvContent += "Index,Timestamp,Student Name,Register No,Department,Year,LinkedIn,Document Name,Document Link,Photo Names,Photo Links,Submission Folder\n";
+  csvContent += "Index,Timestamp,Student Name,Register No,Department,Year,Phone Number,LinkedIn,Document Name,Document Link,Photo Names,Photo Links,Submission Folder\n";
 
   allSubmissions.forEach((sub, i) => {
     const row = [
@@ -583,6 +590,7 @@ exportCsvBtn.addEventListener("click", () => {
       `"${(sub.regNo || "").replace(/"/g, '""')}"`,
       `"${(sub.department || "").replace(/"/g, '""')}"`,
       `"${(sub.year || "").replace(/"/g, '""')}"`,
+      `"${(sub.phone || "").replace(/"/g, '""')}"`,
       `"${(sub.linkedin || "").replace(/"/g, '""')}"`,
       `"${(sub.docName || sub.fileName || "").replace(/"/g, '""')}"`,
       `"${(sub.docUrl || sub.fileUrl || "").replace(/"/g, '""')}"`,
